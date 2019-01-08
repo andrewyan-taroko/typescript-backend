@@ -1,0 +1,21 @@
+{
+   "type": "postgres",
+   "host": "localhost",
+   "database": "typescript_backend_development",
+   "synchronize": false,
+   "logging": true,
+   "entities": [
+      "db/entity/**/*.ts"
+   ],
+   "migrations": [
+      "db/migration/**/*.ts"
+   ],
+   "subscribers": [
+      "db/subscriber/**/*.ts"
+   ],
+   "cli": {
+      "entitiesDir": "db/entity",
+      "migrationsDir": "db/migration",
+      "subscribersDir": "db/subscriber"
+   }
+}
