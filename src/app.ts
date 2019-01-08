@@ -1,3 +1,5 @@
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
 
@@ -5,6 +7,9 @@ import { add } from './math';
 
 export default express()
   .use(morgan('dev'))
+  .use(cookieParser())
+  .use(bodyParser.urlencoded({ extended: true }))
+  .use(bodyParser.json())
   .get('/', (req, res) => {
     res.end('hello world');
   })
