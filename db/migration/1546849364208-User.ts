@@ -10,9 +10,11 @@ export class User1546849364208 implements MigrationInterface {
       name:    'user',
       columns: [
         {
-          name:      'id',
-          type:      'int',
-          isPrimary: true,
+          name:               'id',
+          type:               'int',
+          isPrimary:          true,
+          isGenerated:        true,
+          generationStrategy: 'increment',
         },
         {
           name: 'email',

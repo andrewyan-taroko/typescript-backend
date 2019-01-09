@@ -1,3 +1,5 @@
+import { getConnection } from 'typeorm';
+import { User } from '../db/entity/User';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -10,8 +12,14 @@ export default express()
   .use(cookieParser())
   .use(bodyParser.urlencoded({ extended: true }))
   .use(bodyParser.json())
-  .get('/', (req, res) => {
-    res.end('hello world');
+  .get('/', async (req, res) => {
+    try {
+      const result = await getConnection().manager.find(User);
+      res.json(result);
+    } catch (e) {
+      console.log(e);
+      res.status(500).end();
+    }
   })
   .get('/err', (req, res) => {
     try {
