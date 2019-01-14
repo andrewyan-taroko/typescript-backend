@@ -10,7 +10,8 @@
     "no-console": false,
     "ordered-imports": false,
     "object-literal-sort-keys": false,
-    "quotemark": [true, "single"]
+    "quotemark": [true, "single"],
+    "no-shadowed-variable": [true, { "temporalDeadZone": false }]
   },
   "rulesDirectory": []
 }
