@@ -14,9 +14,14 @@ createConnection().then(async (connection) => {
   const users: User[] = new Array(10).fill(0).map(() => {
     const user: User = new User();
     user.email = faker.internet.email();
+    user.password = faker.internet.password();
     return user;
   });
   await connection.manager.save(users);
+  await new Promise((res) => setTimeout(res, 2000));
+  const user: User | undefined = await connection.manager.findOne(User, { email: 'Constantin_Buckridge@yahoo.com' });
+  user!.email = 'weee';
+  await connection.manager.save(user);
   console.log('done seeding.');
 
   process.exit(0);

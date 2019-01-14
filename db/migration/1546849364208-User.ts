@@ -17,9 +17,28 @@ export class User1546849364208 implements MigrationInterface {
           generationStrategy: 'increment',
         },
         {
-          name: 'email',
-          type: 'varchar',
-        }
+          name:       'email',
+          type:       'varchar',
+          isNullable: false,
+          isUnique:   true,
+        },
+        {
+          name:       'password',
+          type:       'varchar',
+          isNullable: false,
+        },
+        {
+          name:       'created_at',
+          type:       'timestamp',
+          isNullable: false,
+          default:    'LOCALTIMESTAMP',
+        },
+        {
+          name:       'updated_at',
+          type:       'timestamp',
+          isNullable: false,
+          default:    'LOCALTIMESTAMP'
+        },
       ]
     }));
   }
