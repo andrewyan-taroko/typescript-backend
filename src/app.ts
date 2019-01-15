@@ -1,10 +1,12 @@
 import { getConnection } from 'typeorm';
-import { User } from '../db/entity/User';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
 
+import { User } from '../db/entity/User';
+import { Post } from '../db/entity/Post';
+import { Comment } from '../db/entity/Comment';
 import { add } from './math';
 
 export default express()
@@ -12,9 +14,27 @@ export default express()
   .use(cookieParser())
   .use(bodyParser.urlencoded({ extended: true }))
   .use(bodyParser.json())
-  .get('/', async (req, res) => {
+  .get('/users', async (req, res) => {
     try {
-      const result = await getConnection().manager.find(User);
+      const result = await getConnection().manager.find(User, { relations: ['posts','comments'] });
+      res.json(result);
+    } catch (e) {
+      console.log(e);
+      res.status(500).end();
+    }
+  })
+  .get('/posts', async (req, res) => {
+    try {
+      const result = await getConnection().manager.find(Post, { relations: ['user','comments'] });
+      res.json(result);
+    } catch (e) {
+      console.log(e);
+      res.status(500).end();
+    }
+  })
+  .get('/comments', async (req, res) => {
+    try {
+      const result = await getConnection().manager.find(Comment, { relations: ['user','post'] });
       res.json(result);
     } catch (e) {
       console.log(e);
