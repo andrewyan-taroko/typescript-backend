@@ -2,30 +2,31 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  ManyToOne,
   OneToMany,
   JoinColumn,
 } from 'typeorm';
 
 import { Base } from './helpers/Base';
-import { Post } from './Post';
+import { User } from './User';
 import { Comment } from './Comment';
 
 @Entity()
-export class User extends Base {
+export class Post extends Base{
   @PrimaryGeneratedColumn()
   public id!: number;
 
   @Column()
-  public email!: string;
+  public title!: string;
 
   @Column()
-  public password!: string;
+  public content!: string;
 
-  @OneToMany((type) => Post, (post) => post.user)
-  @JoinColumn({ name: 'post_id' })
-  public posts!: Post[];
+  @ManyToOne((type) => User, (user) => user.posts)
+  @JoinColumn({ name: 'user_id' })
+  public user!: User;
 
-  @OneToMany((type) => Comment, (comment) => comment.user)
+  @OneToMany((type) => Comment, (comment) => comment.post)
   @JoinColumn({ name: 'comment_id' })
   public comments!: Comment[];
 }
