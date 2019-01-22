@@ -1,4 +1,4 @@
-import { createConnection } from 'typeorm';
+import { createConnection, Connection } from 'typeorm';
 import faker from 'faker';
 
 import { User } from '../entity/User';
@@ -6,6 +6,24 @@ import { Post } from '../entity/Post';
 import { Comment } from '../entity/Comment';
 
 faker.seed(1000);
+
+const createCommentTree = async (connection: Connection, users: User[], post: Post) => {
+  const cs = [new Comment(), new Comment(), new Comment(), new Comment(), new Comment()];
+  cs.forEach((c) => {
+    c.content = faker.lorem.paragraphs();
+    c.user    = users[faker.random.number() % users.length];
+    c.post    = post;
+  });
+  await connection.manager.save(cs[0]);
+  cs[1].parent = cs[0];
+  await connection.manager.save(cs[1]);
+  cs[2].parent = cs[0];
+  await connection.manager.save(cs[2]);
+  cs[3].parent = cs[1];
+  await connection.manager.save(cs[3]);
+  cs[4].parent = cs[2];
+  await connection.manager.save(cs[4]);
+};
 
 createConnection().then(async (connection) => {
   console.log('clearing...');
@@ -32,7 +50,7 @@ createConnection().then(async (connection) => {
   });
   await connection.manager.save(posts);
 
-  const comments: Comment[] = new Array(40).fill(0).map(() => {
+  const comments: Comment[] = new Array(60).fill(0).map(() => {
     const comment   = new Comment();
     comment.content = faker.lorem.paragraphs();
     comment.user    = users[faker.random.number() % users.length];
@@ -41,10 +59,14 @@ createConnection().then(async (connection) => {
   });
   await connection.manager.save(comments);
 
+  const a = await createCommentTree(connection, users, posts[0]);
+
   await new Promise((res) => setTimeout(res, 2000));
-  const user: User | undefined = await connection.manager.findOne(User, { email: 'Constantin_Buckridge@yahoo.com' });
-  user!.email = 'weee';
-  await connection.manager.save(user);
+  const user = await connection.manager.findOne(User, { email: 'Constantin_Buckridge@yahoo.com' });
+  if (user) {
+    user.email = 'weee';
+    await connection.manager.save(user);
+  }
   console.log('done seeding.');
 
   process.exit(0);

@@ -1,4 +1,4 @@
-import { getConnection } from 'typeorm';
+import { getManager } from 'typeorm';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -16,7 +16,7 @@ export default express()
   .use(bodyParser.json())
   .get('/users', async (req, res) => {
     try {
-      const result = await getConnection().manager.find(User, { relations: ['posts','comments'] });
+      const result = await getManager().find(User, { relations: ['posts','comments'] });
       res.json(result);
     } catch (e) {
       console.log(e);
@@ -25,7 +25,7 @@ export default express()
   })
   .get('/posts', async (req, res) => {
     try {
-      const result = await getConnection().manager.find(Post, { relations: ['user','comments'] });
+      const result = await getManager().find(Post, { relations: ['user','comments'] });
       res.json(result);
     } catch (e) {
       console.log(e);
@@ -34,7 +34,16 @@ export default express()
   })
   .get('/comments', async (req, res) => {
     try {
-      const result = await getConnection().manager.find(Comment, { relations: ['user','post'] });
+      const result = await getManager().find(Comment, { relations: ['user','post', 'parent', 'children'] });
+      res.json(result);
+    } catch (e) {
+      console.log(e);
+      res.status(500).end();
+    }
+  })
+  .get('/comments/tree', async (req, res) => {
+    try {
+      const result = await getManager().getTreeRepository(Comment).findTrees();
       res.json(result);
     } catch (e) {
       console.log(e);
