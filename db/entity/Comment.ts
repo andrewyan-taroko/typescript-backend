@@ -2,6 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  Tree,
+  TreeParent,
+  TreeChildren,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -11,6 +14,7 @@ import { Post } from './Post';
 import { User } from './User';
 
 @Entity()
+@Tree('materialized-path')
 export class Comment extends Base {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -25,4 +29,10 @@ export class Comment extends Base {
   @ManyToOne((type) => Post, (post) => post.comments)
   @JoinColumn({ name: 'post_id' })
   public post!: Post;
+
+  @TreeParent()
+  public parent!: Comment;
+
+  @TreeChildren()
+  public children!: Comment[];
 }
