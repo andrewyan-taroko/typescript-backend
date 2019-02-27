@@ -6,7 +6,7 @@
   "author": "zushenyan",
   "license": "MIT",
   "engines": {
-    "node": ">=10.15.0"
+    "node": "10.15.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.17.0",
@@ -26,9 +26,11 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "apollo-server-express": "^2.4.8",
     "body-parser": "^1.18.3",
     "cookie-parser": "^1.4.3",
     "express": "^4.16.4",
+    "graphql": "^14.1.1",
     "morgan": "^1.9.1",
     "pg": "^7.7.1",
     "reflect-metadata": "^0.1.12",
