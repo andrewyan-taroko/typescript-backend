@@ -1,13 +1,12 @@
+import {
+  ApolloServer,
+  gql,
+} from 'apollo-server-express';
 import { getManager } from 'typeorm';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
-import {
-  ApolloServer,
-  gql,
-  ApolloError,
-} from 'apollo-server-express';
 
 import { User } from '../db/entity/User';
 import { Post } from '../db/entity/Post';
@@ -70,89 +69,96 @@ const app = express()
 
 const typeDefs = gql`
   type Query {
-    user(id: String): User
-    users: [User]
-    post(id: String): Post
-    posts: [Post]
-    comment(id: String): Comment
-    comments: [Comment]
+    user(id: ID!): User
+    users: [User]!
+
+    post(id: ID!): Post
+    posts: [Post]!
+
+    comment(id: ID!): Comment
+    comments: [Comment]!
   }
 
   type User {
-    id: ID
-    email: String
-    posts: [Post]
-    comments: [Comment]
+    id: ID!
+    email: String!
+    posts: [Post]!
+    comments: [Comment]!
   }
 
   type Post {
-    id: ID
+    id: ID!
     title: String
     content: String
-    user: User
-    comments: [Comment]
   }
 
   type Comment {
-    id: ID
+    id: ID!
     content: String
     user: User
     post: Post
     parent: Comment
-    children: [Comment]
+    children: [Comment]!
   }
 `;
 
 const resolvers = {
   Query: {
-    user: async (parent: any, { id }: any) => {
-      throw new ApolloError('meow');
-      return await getManager().findOne(User, { relations: ['posts','comments'], where: { id } });
-      // try {
-      // } catch (e) {
-      //   console.log(e);
-      // }
-    },
-    users: async () => {
-      try {
-        return await getManager().find(User, { relations: ['posts','comments'] });
-      } catch (e) {
-        console.log(e);
+    user: async (parent : any, { id }: { id: string }) => {
+      const result = await getManager().findOne(User, { relations: ['posts', 'comments'], where: { id } });
+      if (result) {
+        return {
+          id:       result.id,
+          email:    result.email,
+          posts:    result.posts,
+          comments: result.comments,
+        };
       }
+      return null;
     },
-    post: async (parent: any, { id }: any) => {
-      try {
-        return await getManager().findOne(Post, { relations: ['user','comments'], where: { id } });
-      } catch (e) {
-        console.log(e);
-      }
+    users: async (parent: any, args: any) => {
+      return await getManager().find(User, { relations: ['posts', 'comments'] });
     },
-    posts: async () => {
-      try {
-        return await getManager().find(Post, { relations: ['user','comments'] });
-      } catch (e) {
-        console.log(e);
+    post: async (parent: any, { id }: { id: string }) => {
+      const result = await getManager().findOne(Post, { relations: ['user', 'comments'], where: { id } });
+      if (result) {
+        return {
+          id:      result.id,
+          title:   result.title,
+          content: result.content,
+        };
       }
+      return null;
     },
-    comment: async (parent: any, { id }: any) => {
-      try {
-        return await getManager().findOne(Comment, { relations: ['user', 'post', 'parent', 'children'], where: { id } });
-      } catch (e) {
-        console.log(e);
-      }
+    posts: async (parent: any, args: any) => {
+      return await getManager().find(Post, { relations: ['user', 'comments'] });
     },
-    comments: async () => {
-      try {
-        return await getManager().find(Comment, { relations: ['user', 'post', 'parent', 'children'] });
-      } catch (e) {
-        console.log(e);
+    comment: async (parent: any, { id }: { id: string }) => {
+      const result = await getManager().findOne(Comment, { relations: ['user', 'post', 'parent', 'children'], where: { id } });
+      if (result) {
+        return {
+          id:       result.id,
+          content:  result.content,
+          user:     result.user,
+          post:     result.post,
+          parent:   result.parent,
+          children: result.children,
+        };
       }
-    }
+      return null;
+    },
+    comments: async (parent: any, args: any) => {
+      return await getManager().find(Comment, { relations: ['user', 'post', 'parent', 'children'] });
+    },
   }
 };
 
-const server = new ApolloServer({ typeDefs, resolvers });
+export const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  // debug: false
+});
 
-server.applyMiddleware({app});
+apolloServer.applyMiddleware({ app });
 
 export default app;

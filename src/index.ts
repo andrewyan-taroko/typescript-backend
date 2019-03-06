@@ -3,7 +3,7 @@ import 'reflect-metadata';
 
 import { createConnection } from 'typeorm';
 
-import app from './app';
+import app, { apolloServer } from './app';
 
 const PORT = 8888;
 
@@ -14,6 +14,7 @@ const PORT = 8888;
     console.log('database connected.');
     app.listen(PORT, () => {
       console.log(`listening on localhost:${PORT}...`);
+      console.log(`graphql path:${PORT}${apolloServer.graphqlPath}...`);
     });
   } catch (e) {
     console.log(e);
