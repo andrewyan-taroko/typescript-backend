@@ -1,6 +1,7 @@
 import {
   ApolloServer,
   gql,
+  UserInputError,
 } from 'apollo-server-express';
 import { getManager } from 'typeorm';
 import bodyParser from 'body-parser';
@@ -69,27 +70,57 @@ const app = express()
 
 const typeDefs = gql`
   type Query {
-    user(id: ID!): User
-    users: [User]!
+    getUser(id: ID!): User
+    getUsers: [User]!
 
-    post(id: ID!): Post
-    posts: [Post]!
+    getPost(id: ID!): Post
+    getPosts: [Post]!
 
-    comment(id: ID!): Comment
-    comments: [Comment]!
+    getComment(id: ID!): Comment
+    getComments: [Comment]!
+  }
+
+  type Mutation {
+    addUser(input: UserInput): User
+    updateUser(id: ID, input: UserInput): User
+    deleteUser(id: ID): User
+
+    addPost(input: PostInput): Post
+    updatePost(id: ID, input: PostInput): Post
+    deletePost(id: ID): Post
+  }
+
+  input UserInput {
+    email: String
+    password: String
+  }
+
+  input PostInput {
+    userId: ID
+    title: String
+    content: String
+  }
+
+  input CommentInput {
+    userId: ID
+    postId: ID
+    parentId: ID
+    content: String
   }
 
   type User {
     id: ID!
     email: String!
-    posts: [Post]!
-    comments: [Comment]!
+    posts: [Post]
+    comments: [Comment]
   }
 
   type Post {
     id: ID!
     title: String
     content: String
+    user: User
+    comments: [Comment]
   }
 
   type Comment {
@@ -98,58 +129,99 @@ const typeDefs = gql`
     user: User
     post: Post
     parent: Comment
-    children: [Comment]!
+    children: [Comment]
   }
 `;
 
 const resolvers = {
   Query: {
-    user: async (parent : any, { id }: { id: string }) => {
+    getUser: async (parent : any, { id }: { id: string }) => {
       const result = await getManager().findOne(User, { relations: ['posts', 'comments'], where: { id } });
-      if (result) {
-        return {
-          id:       result.id,
-          email:    result.email,
-          posts:    result.posts,
-          comments: result.comments,
-        };
-      }
-      return null;
+      return result ? {
+        id:       result.id,
+        email:    result.email,
+        posts:    result.posts,
+        comments: result.comments,
+      } : null;
     },
-    users: async (parent: any, args: any) => {
+    getUsers: async (parent: any, args: any) => {
       return await getManager().find(User, { relations: ['posts', 'comments'] });
     },
-    post: async (parent: any, { id }: { id: string }) => {
+    getPost: async (parent: any, { id }: { id: string }) => {
       const result = await getManager().findOne(Post, { relations: ['user', 'comments'], where: { id } });
-      if (result) {
-        return {
-          id:      result.id,
-          title:   result.title,
-          content: result.content,
-        };
-      }
-      return null;
+      return result ? {
+        id:      result.id,
+        title:   result.title,
+        content: result.content,
+      } : null;
     },
-    posts: async (parent: any, args: any) => {
+    getPosts: async (parent: any, args: any) => {
       return await getManager().find(Post, { relations: ['user', 'comments'] });
     },
-    comment: async (parent: any, { id }: { id: string }) => {
+    getComment: async (parent: any, { id }: { id: string }) => {
       const result = await getManager().findOne(Comment, { relations: ['user', 'post', 'parent', 'children'], where: { id } });
-      if (result) {
-        return {
-          id:       result.id,
-          content:  result.content,
-          user:     result.user,
-          post:     result.post,
-          parent:   result.parent,
-          children: result.children,
-        };
-      }
-      return null;
+      return result ? {
+        id:       result.id,
+        content:  result.content,
+        user:     result.user,
+        post:     result.post,
+        parent:   result.parent,
+        children: result.children,
+      } : null;
     },
-    comments: async (parent: any, args: any) => {
+    getComments: async (parent: any, args: any) => {
       return await getManager().find(Comment, { relations: ['user', 'post', 'parent', 'children'] });
     },
+  },
+  Mutation: {
+    addUser: async (parent: any, { input }: { input: { email: string, password: string } }) => {
+      const user    = new User();
+      user.email    = input.email;
+      user.password = input.password;
+      await getManager().save(user);
+      return user;
+    },
+    updateUser: async (parent: any, { id, input }: { id: string, input: { email: string, password: string }}) => {
+      const user = await getManager().findOne(User, { relations: ['posts', 'comments'], where: { id } });
+      if (user) {
+        user.email    = input.email || user.email;
+        user.password = input.password || user.password;
+        await getManager().save(user);
+      }
+      return user;
+    },
+    deleteUser: async (parent: any, { id }: { id: string }) => {
+      const user = await getManager().findOne(User, { relations: ['posts', 'comments'], where: { id } });
+      await getManager().delete(User, id);
+      return user;
+    },
+    addPost: async (parent: any, { input }: { input: { userId: string, title: string, content: string }}) => {
+      const user = await getManager().findOne(User, { where: { id: input.userId }});
+      if (user) {
+        const post   = new Post();
+        post.title   = input.title;
+        post.content = input.content;
+        post.user    = user;
+        await getManager().save(post);
+        return post;
+      } else {
+        throw new UserInputError('user not found');
+      }
+    },
+    updatePost: async (parent: any, { id, input }: { id: string, input: { title: string, content: string } }) => {
+      const post = await getManager().findOne(Post, { relations: ['user', 'comments'], where: { id } });
+      if (post) {
+        post.title = input.title || post.title;
+        post.content = input.content || post.content;
+        await getManager().save(post);
+      }
+      return post;
+    },
+    deletePost: async (parent: any, { id }: { id: string }) => {
+      const post = await getManager().findOne(Post, id, { relations: ['user', 'comments'], where: { id } });
+      await getManager().delete(Post, id);
+      return post;
+    }
   }
 };
 
